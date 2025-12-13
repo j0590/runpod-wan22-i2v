@@ -4,7 +4,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3.12 pyth
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip setuptools wheel packaging
 RUN pip install pyyaml gdown triton comfy-cli opencv-python
-RUN pip install torch torchvision torchaudio
 RUN /usr/bin/yes | comfy --workspace /ComfyUI install
 COPY start.sh /start.sh
 COPY moeksampler.json /moeksampler.json
