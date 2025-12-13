@@ -14,4 +14,4 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           push: true
-          tags: YOUR_DOCKERHUB_USERNAME/runpod-wan22-i2v:latest
+          tags: jack0590/runpod-wan22-i2v:latest
