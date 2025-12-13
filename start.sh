@@ -1,24 +1,36 @@
 #!/usr/bin/env bash
 set -e
-mkdir -p /workspace/ComfyUI/models/diffusion_models /workspace/ComfyUI/models/clip /workspace/ComfyUI/models/loras /workspace/ComfyUI/models/upscale_models /workspace/ComfyUI/models/vae /workspace/ComfyUI/user/default/workflows
+
+mkdir -p \
+  /workspace/ComfyUI/models/diffusion_models \
+  /workspace/ComfyUI/models/clip \
+  /workspace/ComfyUI/models/loras \
+  /workspace/ComfyUI/models/vae \
+  /workspace/ComfyUI/models/upscale_models
+
 rm -rf /ComfyUI/models
 ln -s /workspace/ComfyUI/models /ComfyUI/models
+
 download_wan22="${download_wan22:-true}"
-download_720p_native_models="${download_720p_native_models:-true}"
-download_480p_native_models="${download_480p_native_models:-true}"
 civitai_token="${civitai_token:-}"
-if [ "${download_wan22}" = "true" ]; then if [ ! -f /workspace/ComfyUI/models/diffusion_models/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors ]; then aria2c -x 16 -s 16 -k 1M -o Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors -d /workspace/ComfyUI/models/diffusion_models https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors; fi; fi
-if [ "${download_wan22}" = "true" ]; then if [ ! -f /workspace/ComfyUI/models/diffusion_models/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors ]; then aria2c -x 16 -s 16 -k 1M -o Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors -d /workspace/ComfyUI/models/diffusion_models https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors; fi; fi
-if [ "${download_wan22}" = "true" ]; then if [ ! -f /workspace/ComfyUI/models/clip/nsfw_wan_umt5-xxl_fp8_scaled.safetensors ]; then aria2c -x 16 -s 16 -k 1M -o nsfw_wan_umt5-xxl_fp8_scaled.safetensors -d /workspace/ComfyUI/models/clip https://huggingface.co/NSFW-API/NSFW-Wan-UMT5-XXL/resolve/main/nsfw_wan_umt5-xxl_fp8_scaled.safetensors; fi; fi
-if [ ! -f /workspace/ComfyUI/models/vae/wan_2.1_vae.safetensors ]; then aria2c -x 16 -s 16 -k 1M -o wan_2.1_vae.safetensors -d /workspace/ComfyUI/models/vae https://huggingface.co/Wan-AI/Wan2.1/resolve/main/wan_2.1_vae.safetensors || true; fi
-if [ ! -f /workspace/ComfyUI/models/upscale_models/1xSkinContrast-SuperUltraCompact.pth ]; then gdown --id 1-pC6_7Lrmy3p-VAh-dGzvETRBUUAQzmV -O /workspace/ComfyUI/models/upscale_models/1xSkinContrast-SuperUltraCompact.pth; fi
-if [ -n "${civitai_token}" ]; then if [ ! -f /workspace/ComfyUI/models/loras/boobiefixer_high.safetensors ]; then curl -L -H "Authorization: Bearer ${civitai_token}" https://civitai.com/api/download/models/2312759 -o /workspace/ComfyUI/models/loras/boobiefixer_high.safetensors; fi; fi
-if [ -n "${civitai_token}" ]; then if [ ! -f /workspace/ComfyUI/models/loras/boobiefixer_low.safetensors ]; then curl -L -H "Authorization: Bearer ${civitai_token}" https://civitai.com/api/download/models/2312689 -o /workspace/ComfyUI/models/loras/boobiefixer_low.safetensors; fi; fi
-if [ -n "${civitai_token}" ]; then if [ ! -f /workspace/ComfyUI/models/loras/penis_fixer_high.safetensors ]; then curl -L -H "Authorization: Bearer ${civitai_token}" https://civitai.com/api/download/models/2284083 -o /workspace/ComfyUI/models/loras/penis_fixer_high.safetensors; fi; fi
-if [ -n "${civitai_token}" ]; then if [ ! -f /workspace/ComfyUI/models/loras/penis_fixer_low.safetensors ]; then curl -L -H "Authorization: Bearer ${civitai_token}" https://civitai.com/api/download/models/2284089 -o /workspace/ComfyUI/models/loras/penis_fixer_low.safetensors; fi; fi
-if [ ! -f /workspace/ComfyUI/models/loras/Instagirlv2.5-LOW.safetensors ]; then gdown --id 1pwkyAiN15RxocVPsSEdebVUbhSaDUdIF -O /workspace/ComfyUI/models/loras/Instagirlv2.5-LOW.safetensors; fi
-if [ ! -f /workspace/ComfyUI/models/loras/Instagirlv2.5-HIGH.safetensors ]; then gdown --id 1BfU6o4ICsN5o-NTB5PAoQEK5n1c1j4B0 -O /workspace/ComfyUI/models/loras/Instagirlv2.5-HIGH.safetensors; fi
-if [ -n "${civitai_token}" ]; then if [ ! -f /workspace/ComfyUI/models/loras/nsfwsks_high.safetensors ]; then curl -L -H "Authorization: Bearer ${civitai_token}" https://civitai.com/api/download/models/2073605 -o /workspace/ComfyUI/models/loras/nsfwsks_high.safetensors; fi; fi
-if [ -n "${civitai_token}" ]; then if [ ! -f /workspace/ComfyUI/models/loras/nsfwsks_low.safetensors ]; then curl -L -H "Authorization: Bearer ${civitai_token}" https://civitai.com/api/download/models/2083303 -o /workspace/ComfyUI/models/loras/nsfwsks_low.safetensors; fi; fi
-if [ -n "${civitai_token}" ]; then if [ ! -f /workspace/ComfyUI/models/loras/female_genitals_LOW.safetensors ]; then curl -L -H "Authorization: Bearer ${civitai_token}" https://civitai.com/api/download/models/2012120 -o /workspace/ComfyUI/models/loras/female_genitals_LOW.safetensors; fi; fi
-python /ComfyUI/main.py --listen 0.0.0.0 --port 8188 ${COMFYUI_ARGS:-}
+
+if [ "$download_wan22" = "true" ]; then
+  aria2c -x16 -s16 -k1M -d /workspace/ComfyUI/models/diffusion_models \
+    https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors \
+    https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors
+fi
+
+aria2c -x16 -s16 -k1M -d /workspace/ComfyUI/models/clip \
+  https://huggingface.co/NSFW-API/NSFW-Wan-UMT5-XXL/resolve/main/nsfw_wan_umt5-xxl_fp8_scaled.safetensors
+
+aria2c -x16 -s16 -k1M -d /workspace/ComfyUI/models/vae \
+  https://huggingface.co/Wan-AI/Wan2.1/resolve/main/wan_2.1_vae.safetensors || true
+
+if [ -n "$civitai_token" ]; then
+  curl -L -H "Authorization: Bearer $civitai_token" https://civitai.com/api/download/models/2312759 -o /workspace/ComfyUI/models/loras/boobiefixer_high.safetensors
+  curl -L -H "Authorization: Bearer $civitai_token" https://civitai.com/api/download/models/2312689 -o /workspace/ComfyUI/models/loras/boobiefixer_low.safetensors
+  curl -L -H "Authorization: Bearer $civitai_token" https://civitai.com/api/download/models/2284083 -o /workspace/ComfyUI/models/loras/penis_fixer_high.safetensors
+  curl -L -H "Authorization: Bearer $civitai_token" https://civitai.com/api/download/models/2284089 -o /workspace/ComfyUI/models/loras/penis_fixer_low.safetensors
+fi
+
+python /ComfyUI/main.py --listen 0.0.0.0 --port 8188
