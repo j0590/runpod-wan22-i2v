@@ -1,9 +1,14 @@
-FROM nvidia/cuda:12.4.1-runtime-ubuntu22.04
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y git curl wget aria2 ffmpeg python3 python3-pip python3-venv ca-certificates && rm -rf /var/lib/apt/lists/*
-WORKDIR /workspace
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git /workspace/ComfyUI
-RUN python3 -m pip install --upgrade pip && pip install -r /workspace/ComfyUI/requirements.txt
+FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
+ENV DEBIAN_FRONTEND=noninteractive PIP_PREFER_BINARY=1 PYTHONUNBUFFERED=1 CMAKE_BUILD_PARALLEL_LEVEL=8
+RUN apt-get update && apt-get install -y --no-install-recommends python3.12 python3.12-venv python3.12-dev python3-pip curl ffmpeg ninja-build git git-lfs aria2 wget vim libgl1 libglib2.0-0 build-essential gcc ca-certificates && ln -sf /usr/bin/python3.12 /usr/bin/python && ln -sf /usr/bin/pip3 /usr/bin/pip && python3.12 -m venv /opt/venv && apt-get clean && rm -rf /var/lib/apt/lists/*
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --upgrade pip && pip install packaging setuptools wheel
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+RUN pip install pyyaml gdown triton comfy-cli opencv-python
+RUN /usr/bin/yes | comfy --workspace /ComfyUI install
+RUN mkdir -p /ComfyUI/custom_nodes
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/princepainter/ComfyUI-PainterI2V.git && if [ -f /ComfyUI/custom_nodes/ComfyUI-PainterI2V/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-PainterI2V/requirements.txt; fi
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/stduhpf/ComfyUI-WanMoeKSampler.git && if [ -f /ComfyUI/custom_nodes/ComfyUI-WanMoeKSampler/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-WanMoeKSampler/requirements.txt; fi
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 EXPOSE 8188
