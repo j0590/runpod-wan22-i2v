@@ -4,22 +4,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3.12 pyth
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip && pip install packaging setuptools wheel
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
-
 RUN pip install pyyaml gdown triton comfy-cli opencv-python
 RUN /usr/bin/yes | comfy --workspace /ComfyUI install
 RUN mkdir -p /ComfyUI/custom_nodes
-RUN cd /ComfyUI/custom_nodes && git clone https://github.com/princepainter/ComfyUI-PainterI2V.git
- && if [ -f /ComfyUI/custom_nodes/ComfyUI-PainterI2V/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-PainterI2V/requirements.txt; fi
-RUN cd /ComfyUI/custom_nodes && git clone https://github.com/stduhpf/ComfyUI-WanMoeKSampler.git
- && if [ -f /ComfyUI/custom_nodes/ComfyUI-WanMoeKSampler/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-WanMoeKSampler/requirements.txt; fi
-RUN cd /ComfyUI/custom_nodes && git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git
- && if [ -f /ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt; fi
-RUN cd /ComfyUI/custom_nodes && git clone https://github.com/rgthree/rgthree-comfy.git
- && if [ -f /ComfyUI/custom_nodes/rgthree-comfy/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/rgthree-comfy/requirements.txt; fi
-RUN cd /ComfyUI/custom_nodes && git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack.git
- && if [ -f /ComfyUI/custom_nodes/ComfyUI-Impact-Pack/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-Impact-Pack/requirements.txt; fi
-RUN cd /ComfyUI/custom_nodes && git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git
- && if [ -f /ComfyUI/custom_nodes/comfyui_controlnet_aux/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/comfyui_controlnet_aux/requirements.txt; fi
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/princepainter/ComfyUI-PainterI2V.git && if [ -f /ComfyUI/custom_nodes/ComfyUI-PainterI2V/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-PainterI2V/requirements.txt; fi
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/stduhpf/ComfyUI-WanMoeKSampler.git && if [ -f /ComfyUI/custom_nodes/ComfyUI-WanMoeKSampler/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-WanMoeKSampler/requirements.txt; fi
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git && if [ -f /ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-VideoHelperSuite/requirements.txt; fi
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/rgthree/rgthree-comfy.git && if [ -f /ComfyUI/custom_nodes/rgthree-comfy/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/rgthree-comfy/requirements.txt; fi
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack.git && if [ -f /ComfyUI/custom_nodes/ComfyUI-Impact-Pack/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/ComfyUI-Impact-Pack/requirements.txt; fi
+RUN cd /ComfyUI/custom_nodes && git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git && if [ -f /ComfyUI/custom_nodes/comfyui_controlnet_aux/requirements.txt ]; then pip install -r /ComfyUI/custom_nodes/comfyui_controlnet_aux/requirements.txt; fi
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 EXPOSE 8188
