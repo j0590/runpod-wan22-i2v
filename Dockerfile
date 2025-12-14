@@ -7,15 +7,10 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12 python3.12-venv python3.12-dev python3-pip \
-    git git-lfs curl wget aria2 unzip rsync \
-    build-essential cmake ninja-build \
-    ffmpeg \
-    libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 \
+    git git-lfs curl wget aria2 unzip \
+    ffmpeg libgl1 libglib2.0-0 \
  && rm -rf /var/lib/apt/lists/* \
  && git lfs install
-
-# Seed a copy of ComfyUI inside the image (first boot faster + reliable)
-RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git /opt/ComfyUI
 
 COPY start.sh /start.sh
 COPY moeksampler.json /moeksampler.json
