@@ -5,7 +5,7 @@ ARG TORCH_VERSION=2.9.1
 ARG TORCHVISION_VERSION=0.24.1
 ARG TORCHAUDIO_VERSION=2.9.1
 ARG CUDA_TAG=cu126
-RUN pip install --no-cache-dir --upgrade "torch==${TORCH_VERSION}+${CUDA_TAG}" "torchvision==${TORCHVISION_VERSION}+${CUDA_TAG}" "torchaudio==${TORCHAUDIO_VERSION}+${CUDA_TAG}" --extra-index-url "https://download.pytorch.org/whl/${CUDA_TAG}" && python -c "import torch; print('torch', torch.__version__, 'cuda', torch.version.cuda)"
+RUN pip install --no-cache-dir --upgrade "torch==${TORCH_VERSION}+${CUDA_TAG}" "torchvision==${TORCHVISION_VERSION}+${CUDA_TAG}" "torchaudio==${TORCHAUDIO_VERSION}+${CUDA_TAG}" --index-url "https://download.pytorch.org/whl/${CUDA_TAG}" && python -c "import torch; print('torch', torch.__version__, 'cuda', torch.version.cuda)"
 RUN pip install --no-cache-dir ninja
 RUN git clone --depth=1 https://github.com/thu-ml/SageAttention.git /tmp/SageAttention && cd /tmp/SageAttention && TORCH_CUDA_ARCH_LIST="8.9;12.0" MAX_JOBS=8 NVCC_APPEND_FLAGS="--threads 8" pip install --no-cache-dir --no-build-isolation -v . && python -c "import sageattention; print('sageattention', getattr(sageattention,'__version__','unknown'))" && rm -rf /tmp/SageAttention
 WORKDIR /
