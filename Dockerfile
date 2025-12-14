@@ -7,6 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PATH="/opt/venv/bin:$PATH"
 
 # Install System Dependencies & TCMalloc
+# Added 'software-properties-common' just in case PPA is needed later, but 24.04 has py3.12
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -19,10 +20,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     python3.12 -m venv /opt/venv && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# FIXED: Use cu126 Nightly (Works on 12.8 Driver)
+# -------------------------------------------------------------------------
+# THE FIX: Use Stable Torch 2.5.1 (CUDA 12.4)
+# This works perfectly on a CUDA 12.8 Driver.
+# -------------------------------------------------------------------------
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --pre torch torchvision torchaudio \
-        --index-url https://download.pytorch.org/whl/nightly/cu126
+    pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+    --index-url https://download.pytorch.org/whl/cu124
 
 # Core Python Tooling
 RUN --mount=type=cache,target=/root/.cache/pip \
