@@ -7,22 +7,13 @@ ENV FORCE_CUDA=1
 ENV MAX_JOBS=16
 
 # --------------------
-# System deps
+# System dependencies
 # --------------------
 RUN apt-get update && apt-get install -y \
-    git \
-    wget \
-    curl \
-    ffmpeg \
-    build-essential \
-    ninja-build \
-    pkg-config \
-    python3.11 \
-    python3.11-venv \
-    python3.11-dev \
-    python3-pip \
-    libgl1 \
-    libglib2.0-0 \
+    git curl wget aria2 ffmpeg \
+    build-essential ninja-build pkg-config \
+    python3.11 python3.11-venv python3.11-dev python3-pip \
+    libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
@@ -30,7 +21,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 WORKDIR /workspace
 
 # --------------------
-# Python tooling
+# Python base tooling
 # --------------------
 RUN python -m pip install --upgrade pip setuptools wheel
 
@@ -44,7 +35,7 @@ RUN pip install \
     --index-url https://download.pytorch.org/whl/cu128
 
 # --------------------
-# Core deps (used by MANY nodes)
+# Core Python deps used by nodes
 # --------------------
 RUN pip install \
     numpy scipy einops timm psutil tqdm \
@@ -54,20 +45,18 @@ RUN pip install \
     opencv-contrib-python
 
 # --------------------
-# SageAttention (built ONCE here)
+# SageAttention (compiled ONCE here)
 # --------------------
 RUN git clone https://github.com/Dao-AILab/sageattention.git && \
     cd sageattention && \
     pip install . --no-build-isolation && \
     cd .. && rm -rf sageattention
 
-# --------------------
-# Optional accel (non-fatal)
-# --------------------
+# Optional acceleration
 RUN pip install xformers --no-deps || true
 
 # --------------------
-# Copy start script
+# Start script
 # --------------------
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
