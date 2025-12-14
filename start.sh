@@ -1,6 +1,86 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+LOGTS(){ date +"[%H:%M:%S]"; }
+log(){ echo "$(LOGTS) $*"; }
+
+WORKSPACE="${WORKSPACE:-/workspace}"
+COMFY_DIR="${COMFY_DIR:-$WORKSPACE/ComfyUI}"
+
+VENV_ROOT="${VENV_ROOT:-$WORKSPACE/venvs}"
+VENV_NAME="${VENV_NAME:-py312-cu128}"
+VENV_DIR="${VENV_ROOT}/${VENV_NAME}"
+
+SENTINEL="${SENTINEL:-$WORKSPACE/.bootstrap_done}"
+
+COMFYUI_ARGS="${COMFYUI_ARGS:---listen 0.0.0.0 --port 8188}"
+COMFYUI_ARGS="${COMFYUI_ARGS/-listen /--listen }"
+
+CACHE_DIR="${CACHE_DIR:-$WORKSPACE/.cache}"
+export XDG_CACHE_HOME="$CACHE_DIR"
+export TORCHINDUCTOR_CACHE_DIR="$CACHE_DIR/torchinductor"
+export TRITON_CACHE_DIR="$CACHE_DIR/triton"
+export PIP_CACHE_DIR="$CACHE_DIR/pip"
+
+CLONE_JOBS="${CLONE_JOBS:-8}"
+ARIA_CONN="${ARIA_CONN:-16}"
+
+need(){ command -v "$1" >/dev/null 2>&1 || { log "❌ Missing $1"; exit 1; }; }
+
+need git
+need aria2c
+need python3.12
+
+log "🚀 Boot starting"
+
+mkdir -p "$VENV_ROOT" "$CACHE_DIR"
+
+if [ ! -d "$COMFY_DIR" ]; then
+  log "📦 Cloning ComfyUI into volume"
+  git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git "$COMFY_DIR"
+fi
+
+if [ ! -d "$VENV_DIR" ]; then
+  log "🐍 Creating venv"
+  python3.12 -m venv "$VENV_DIR"
+fi
+
+source "$VENV_DIR/bin/activate"
+python -m pip install --upgrade pip wheel setuptools >/dev/null
+
+# ONE-TIME BOOTSTRAP
+if [ ! -f "$SENTINEL" ]; then
+
+  log "📦 Installing ComfyUI base deps"
+  python -m pip install -r "$COMFY_DIR/requirements.txt"
+
+  log "🔧 Installing performance packages"
+  python -m pip install --upgrade \
+    triton \
+    sageattention
+
+  log "✔ Installed triton + sageattention"
+
+  # Clone essential custom nodes (like KJNodes) exactly once
+  CUSTOM="$COMFY_DIR/custom_nodes"
+  mkdir -p "$CUSTOM"
+  log "📂 Cloning essential custom nodes"
+  git clone --depth 1 https://github.com/kijai/ComfyUI-KJNodes.git "$CUSTOM/ComfyUI-KJNodes"
+  git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git "$CUSTOM/ComfyUI-WanVideoWrapper"
+  git clone --depth 1 https://github.com/stduhpf/ComfyUI-WanMoeKSampler.git "$CUSTOM/ComfyUI-WanMoeKSampler"
+
+  touch "$SENTINEL"
+  log "🔖 Bootstrap complete"
+else
+  log "⚡ Sentinel found — skipping full bootstrap"
+fi
+
+cd "$COMFY_DIR"
+log "🌐 Starting ComfyUI"
+exec python main.py $COMFYUI_ARGS
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
 ts() { date +"[%H:%M:%S]"; }
 log() { echo "$(ts) $*"; }
 
