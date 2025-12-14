@@ -2,7 +2,8 @@ FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PIP_BREAK_SYSTEM_PACKAGES=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.12 python3.12-venv python3-pip python-is-python3 \
