@@ -15,25 +15,16 @@ export PIP_CACHE_DIR="/workspace/.cache/pip"
 export TORCH_HOME="/workspace/.cache/torch"
 export HF_HOME="/workspace/.cache/huggingface"
 log "🚀 Validating ComfyUI installation..."
-mkdir -p "$COMFY_DIR"
-if [ ! -d "$COMFY_DIR" ] || [ -z "$(ls -A "$COMFY_DIR" 2>/dev/null || true)" ]; then
-  log "📥 Initializing ComfyUI from Docker image..."
-  cp -a /ComfyUI/. "$COMFY_DIR"/
-else
-  log "✅ ComfyUI found in /workspace"
-fi
+if [ ! -d "$COMFY_DIR" ] || [ -z "$(ls -A "$COMFY_DIR" 2>/dev/null || true)" ]; then log "📥 Initializing ComfyUI from Docker image..." && mkdir -p "$COMFY_DIR" && cp -a /ComfyUI/. "$COMFY_DIR"/; else log "✅ ComfyUI found in /workspace"; fi
 mkdir -p "$CUSTOM_NODES"
-clone_repo(){ local name="$1"; local url="$2"; local path="$CUSTOM_NODES/$name"; if [ -d "$path" ]; then log "   Exists: $name"; return 0; fi; log "   Cloning: $name"; git clone --depth=1 --recursive "$url" "$path" >/dev/null 2>&1 || return 1; }
+clone_repo(){ local name="$1"; local url="$2"; local path="$CUSTOM_NODES/$name"; if [ -d "$path" ]; then log "   Exists: $name"; return; fi; log "   Cloning: $name"; git clone --depth=1 --recursive "$url" "$path" >/dev/null 2>&1 || log "❌ Setup Failed: $name"; }
 log "🧩 Checking Custom Nodes..."
 pids=()
-fails=0
-for entry in "${NODES_REQUIRED[@]}"; do IFS='|' read -r name url <<<"$entry"; (clone_repo "$name" "$url") & pids+=("$!:$name:required"); done
-for entry in "${NODES_OPTIONAL[@]}"; do IFS='|' read -r name url <<<"$entry"; (clone_repo "$name" "$url" || true) & pids+=("$!:$name:optional"); done
-for meta in "${pids[@]}"; do IFS=':' read -r pid name tier <<<"$meta"; if ! wait "$pid"; then if [ "$tier" = "required" ]; then log "❌ Required node failed: $name"; fails=1; else log "⚠️ Optional node failed: $name"; fi; fi; done
-if [ "$fails" -ne 0 ]; then log "❌ One or more REQUIRED nodes failed to clone. Exiting."; exit 1; fi
+for entry in "${NODES_REQUIRED[@]}" "${NODES_OPTIONAL[@]}"; do IFS='|' read -r name url <<<"$entry"; clone_repo "$name" "$url" & pids+=($!); done
+for pid in "${pids[@]}"; do wait "$pid" || true; done
 log "✅ Custom Nodes Checked/Cloned"
 log "📦 Checking Node Requirements..."
-find "$CUSTOM_NODES" -maxdepth 2 -name requirements.txt | while read -r req_file; do grep -vE "^(torch|torchvision|torchaudio|opencv-python|opencv-python-headless|sageattention)\b" "$req_file" > "${req_file}.clean" || true; if [ -s "${req_file}.clean" ]; then python -m pip install -r "${req_file}.clean" >/dev/null 2>&1 || true; fi; rm -f "${req_file}.clean"; done
+find "$CUSTOM_NODES" -maxdepth 2 -name requirements.txt | while read -r req_file; do grep -vE "^(torch|torchvision|torchaudio|opencv-python|opencv-python-headless|sageattention)([<=> ].*)?$" "$req_file" > "${req_file}.clean" || true; if [ -s "${req_file}.clean" ]; then python -m pip install -r "${req_file}.clean" >/dev/null 2>&1 || true; fi; rm -f "${req_file}.clean"; done
 mkdir -p "$LORA_DIR"
 download_file(){ local name="$1"; local url="$2"; local path="$LORA_DIR/$name"; if [ -f "$path" ]; then log "   Exists: $name"; else log "   Downloading: $name"; aria2c -c -x 16 -s 16 -k 1M -q -o "$name" -d "$LORA_DIR" "$url" || log "❌ Failed: $name"; fi; }
 log "⬇️  Checking/Downloading LoRAs..."
@@ -41,5 +32,4 @@ for entry in "${LORAS[@]}"; do IFS='|' read -r name url <<<"$entry"; download_fi
 if [ -d "$CUSTOM_NODES/ComfyLiterals/web" ]; then mkdir -p "$COMFY_DIR/web/extensions"; if [ ! -e "$COMFY_DIR/web/extensions/ComfyLiterals" ]; then ln -s "$CUSTOM_NODES/ComfyLiterals/web" "$COMFY_DIR/web/extensions/ComfyLiterals" || true; fi; fi
 log "🚀 Starting ComfyUI on port 8188..."
 cd "$COMFY_DIR"
-ARGS="--listen 0.0.0.0 --port 8188 --preview-method auto"
-exec python main.py $ARGS
+exec python main.py --listen 0.0.0.0 --port 8188 --preview-method auto
