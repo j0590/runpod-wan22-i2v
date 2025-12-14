@@ -7,11 +7,12 @@ ENV FORCE_CUDA=1
 ENV MAX_JOBS=16
 
 # --------------------
-# System dependencies
+# System deps
 # --------------------
 RUN apt-get update && apt-get install -y \
     git \
     wget \
+    curl \
     ffmpeg \
     build-essential \
     ninja-build \
@@ -26,12 +27,12 @@ RUN apt-get update && apt-get install -y \
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1
 
+WORKDIR /workspace
+
 # --------------------
 # Python tooling
 # --------------------
 RUN python -m pip install --upgrade pip setuptools wheel
-
-WORKDIR /workspace
 
 # --------------------
 # Torch 2.8.0 + CUDA 12.8
@@ -43,26 +44,17 @@ RUN pip install \
     --index-url https://download.pytorch.org/whl/cu128
 
 # --------------------
-# Core Python deps (NO runtime installs later)
+# Core deps (used by MANY nodes)
 # --------------------
 RUN pip install \
-    numpy \
-    scipy \
-    einops \
-    timm \
-    sentencepiece \
-    protobuf \
-    safetensors \
-    huggingface_hub \
-    accelerate \
-    onnx \
-    onnxruntime-gpu \
-    opencv-contrib-python \
-    psutil \
-    tqdm
+    numpy scipy einops timm psutil tqdm \
+    safetensors huggingface_hub accelerate \
+    sentencepiece protobuf \
+    onnx onnxruntime-gpu \
+    opencv-contrib-python
 
 # --------------------
-# SageAttention (CRITICAL)
+# SageAttention (built ONCE here)
 # --------------------
 RUN git clone https://github.com/Dao-AILab/sageattention.git && \
     cd sageattention && \
@@ -70,29 +62,15 @@ RUN git clone https://github.com/Dao-AILab/sageattention.git && \
     cd .. && rm -rf sageattention
 
 # --------------------
-# Optional but useful
+# Optional accel (non-fatal)
 # --------------------
 RUN pip install xformers --no-deps || true
 
 # --------------------
-# ComfyUI
+# Copy start script
 # --------------------
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git
-
-# --------------------
-# Custom nodes (only what you use)
-# --------------------
-WORKDIR /workspace/ComfyUI/custom_nodes
-
-RUN git clone https://github.com/kijai/ComfyUI-KJNodes.git && \
-    git clone https://github.com/Hearmeman24/comfyui-wan.git && \
-    git clone https://github.com/Miosp/ComfyUI-FBCNN.git
-
-WORKDIR /workspace/ComfyUI
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 EXPOSE 8188
-
-# --------------------
-# Start command
-# --------------------
-CMD ["python", "main.py", "--listen", "0.0.0.0", "--port", "8188"]
+CMD ["/start.sh"]
