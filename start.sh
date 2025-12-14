@@ -2,6 +2,9 @@
 # Optimized start.sh for RunPod + Wan2.2 I2V + RTX 5090
 set -euo pipefail
 
+# Ensure we use the venv created in Dockerfile
+export PATH="/opt/venv/bin:$PATH"
+
 # --- CONFIGURATION (Add/Remove items here) ---
 
 # Required Custom Nodes (Must have for your workflow)
