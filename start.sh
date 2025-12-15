@@ -6,7 +6,7 @@ TCMALLOC="$(ldconfig -p | grep -Po "libtcmalloc.so.\d" | head -n 1)"
 export LD_PRELOAD="${TCMALLOC}"
 export PATH="/opt/venv/bin:$PATH"
 
-# 2. SAGE ATTENTION (Background Build)
+# 2. SAGE ATTENTION (Background)
 echo "⚙️  Starting SageAttention build..."
 (
     cd /tmp
@@ -30,14 +30,14 @@ fi
 
 COMFY_DIR="$ROOT_DIR/ComfyUI"
 CUSTOM_NODES="$COMFY_DIR/custom_nodes"
-# Define all model paths
+# Define all paths
 DIFF_DIR="$COMFY_DIR/models/diffusion_models"
 TEXT_DIR="$COMFY_DIR/models/text_encoders"
 CLIP_DIR="$COMFY_DIR/models/clip_vision"
 VAE_DIR="$COMFY_DIR/models/vae"
 LORA_DIR="$COMFY_DIR/models/loras"
+DET_DIR="$COMFY_DIR/models/detection"
 UPSCALE_DIR="$COMFY_DIR/models/upscale_models"
-DETECTION_DIR="$COMFY_DIR/models/detection"
 
 # Sync ComfyUI
 if [ ! -d "$COMFY_DIR" ] || [ -z "$(ls -A "$COMFY_DIR")" ]; then
@@ -56,7 +56,7 @@ install_node() {
         echo "   ⬇️ Cloning $dir..."
         git clone "$url"
         if [ -f "$dir/requirements.txt" ]; then
-            # Filter torch AND insightface (since we pre-installed it)
+            # FILTER: Remove insightface/torch to prevent runtime rebuild crashes
             grep -vE "torch|torchvision|torchaudio|insightface|onnxruntime" "$dir/requirements.txt" > "$dir/reqs_clean.txt"
             pip install -r "$dir/reqs_clean.txt" &
         fi
@@ -93,9 +93,11 @@ install_node "https://github.com/welltop-cn/ComfyUI-TeaCache.git"
 install_node "https://github.com/Fannovel16/ComfyUI-Frame-Interpolation.git"
 install_node "https://github.com/1038lab/ComfyUI-RMBG.git"
 
-wait # Wait for node requirements
+wait # Wait for reqs
 
-# 5. DOWNLOAD MODELS (Including VAEs & Encoders)
+# 5. DOWNLOAD MODELS (VAEs & Models)
+mkdir -p "$DIFF_DIR" "$TEXT_DIR" "$CLIP_DIR" "$VAE_DIR" "$LORA_DIR" "$DET_DIR" "$UPSCALE_DIR"
+
 download() {
     local url="$1"
     local out="$2"
@@ -112,17 +114,17 @@ download() {
 
 echo "⬇️  Downloading Models..."
 
-# --- CRITICAL WAN DEPENDENCIES (The missing pieces) ---
+# --- CRITICAL DEPENDENCIES ---
 download "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/text_encoders/umt5_xxl_fp8_e4m3fn_scaled.safetensors" "$TEXT_DIR/umt5_xxl_fp8_e4m3fn_scaled.safetensors"
 download "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors" "$TEXT_DIR/open-clip-xlm-roberta-large-vit-huge-14_visual_fp16.safetensors"
 download "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/clip_vision/clip_vision_h.safetensors" "$CLIP_DIR/clip_vision_h.safetensors"
 download "https://huggingface.co/Kijai/WanVideo_comfy/resolve/main/Wan2_1_VAE_bf16.safetensors" "$VAE_DIR/Wan2_1_VAE_bf16.safetensors"
 download "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors" "$VAE_DIR/wan_2.1_vae.safetensors"
 
-# --- DETECTION MODELS (For WanAnimatePreprocess) ---
-download "https://huggingface.co/Wan-AI/Wan2.2-Animate-14B/resolve/main/process_checkpoint/det/yolov10m.onnx" "$DETECTION_DIR/yolov10m.onnx"
-download "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/vitpose_h_wholebody_data.bin" "$DETECTION_DIR/vitpose_h_wholebody_data.bin"
-download "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/vitpose_h_wholebody_model.onnx" "$DETECTION_DIR/vitpose_h_wholebody_model.onnx"
+# --- DETECTION MODELS ---
+download "https://huggingface.co/Wan-AI/Wan2.2-Animate-14B/resolve/main/process_checkpoint/det/yolov10m.onnx" "$DET_DIR/yolov10m.onnx"
+download "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/vitpose_h_wholebody_data.bin" "$DET_DIR/vitpose_h_wholebody_data.bin"
+download "https://huggingface.co/Kijai/vitpose_comfy/resolve/main/onnx/vitpose_h_wholebody_model.onnx" "$DET_DIR/vitpose_h_wholebody_model.onnx"
 
 # --- YOUR MODELS ---
 download "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors" "$DIFF_DIR/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors"
@@ -134,7 +136,7 @@ if [ ! -f "$UPSCALE_DIR/1xSkinContrast-SuperUltraCompact.pth" ]; then
     gdown --id 1-pC6_7Lrmy3p-VAh-dGzvETRBUUAQzmV -O "$UPSCALE_DIR/1xSkinContrast-SuperUltraCompact.pth"
 fi
 
-# CivitAI LoRAs
+# CivitAI
 CIV_TOKEN="Authorization: Bearer 1fbae9052dd92d22f2d66081452c188b"
 download "https://civitai.com/api/download/models/2312759" "$LORA_DIR/boobiefixer_high.safetensors" "$CIV_TOKEN"
 download "https://civitai.com/api/download/models/2312689" "$LORA_DIR/boobiefixer_low.safetensors" "$CIV_TOKEN"
@@ -147,7 +149,7 @@ download "https://civitai.com/api/download/models/2176505" "$LORA_DIR/DR34ML4Y_n
 download "https://civitai.com/api/download/models/2496721" "$LORA_DIR/pussy_asshole_low.safetensors" "$CIV_TOKEN"
 download "https://civitai.com/api/download/models/2496754" "$LORA_DIR/pussy_asshole_high.safetensors" "$CIV_TOKEN"
 
-# GDrive LoRAs
+# GDrive
 [ ! -f "$LORA_DIR/Instagirlv2.5-LOW.safetensors" ] && gdown --id 1pwkyAiN15RxocVPsSEdebVUbhSaDUdIF -O "$LORA_DIR/Instagirlv2.5-LOW.safetensors"
 [ ! -f "$LORA_DIR/Instagirlv2.5-HIGH.safetensors" ] && gdown --id 1BfU6o4ICsN5o-NTB5PAoQEK5n1c1j4B0 -O "$LORA_DIR/Instagirlv2.5-HIGH.safetensors"
 
