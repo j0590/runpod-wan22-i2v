@@ -6,7 +6,7 @@ TCMALLOC="$(ldconfig -p | grep -Po "libtcmalloc.so.\d" | head -n 1)"
 export LD_PRELOAD="${TCMALLOC}"
 export PATH="/opt/venv/bin:$PATH"
 
-# 2. SAGE ATTENTION BUILD (Hearemen "Age" Logic)
+# 2. SAGE ATTENTION BUILD
 echo "⚙️  Starting SageAttention build (Background)..."
 (
     cd /tmp
@@ -51,7 +51,6 @@ install_node() {
     if [ ! -d "$dir" ]; then
         echo "   ⬇️ Cloning $dir..."
         git clone "$url"
-        # Install requirements if they exist, filtering torch
         if [ -f "$dir/requirements.txt" ]; then
             grep -vE "torch|torchvision|torchaudio" "$dir/requirements.txt" > "$dir/reqs_clean.txt"
             pip install -r "$dir/reqs_clean.txt" &
