@@ -1,47 +1,41 @@
-# 1. BASE: Use the "Golden Standard" for AI (Ubuntu 22.04 + CUDA 12.4)
-# This avoids the Python 3.12 "externally managed" errors and wheel incompatibilities.
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04 AS base
+# 1. EXACT HEAREMEN BASE (Verified Working)
+FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04 AS base
 
-# 2. ENV: Standard Optimization Flags
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_PREFER_BINARY=1 \
     PYTHONUNBUFFERED=1 \
+    CMAKE_BUILD_PARALLEL_LEVEL=8 \
     PATH="/opt/venv/bin:$PATH"
 
-# 3. SYSTEM: Install Python 3.11 (The "Sweet Spot" for ComfyUI)
-# We use the 'deadsnakes' PPA to get modern Python on 22.04
+# 2. SYSTEM DEPS (With Cache Mounts to prevent apt failures)
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
     apt-get install -y --no-install-recommends \
-        python3.11 python3.11-venv python3.11-dev \
+        python3.12 python3.12-venv python3.12-dev \
         python3-pip build-essential \
         curl ffmpeg ninja-build git aria2 git-lfs wget vim \
         libgl1 libglib2.0-0 google-perftools && \
     \
-    # Create Virtual Env
-    python3.11 -m venv /opt/venv && \
+    # Symlink Python 3.12
+    ln -sf /usr/bin/python3.12 /usr/bin/python && \
+    ln -sf /usr/bin/pip3 /usr/bin/pip && \
     \
-    # Upgrade pip strictly inside the venv
-    /opt/venv/bin/pip install --upgrade pip wheel setuptools && \
+    # Setup Venv
+    python3.12 -m venv /opt/venv && \
     \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 4. TORCH: Install Stable Version (2.5.1 for CUDA 12.4)
-# This wheel is 100% available and stable.
+# 3. INSTALL TORCH NIGHTLY (Crucial: Uses Cache Mount to prevent OOM)
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
-    --index-url https://download.pytorch.org/whl/cu124
+    pip install --pre torch torchvision torchaudio \
+    --index-url https://download.pytorch.org/whl/nightly/cu128
 
-# 5. CORE: Install Common Tools
+# 4. PYTHON TOOLS
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install packaging setuptools wheel pyyaml gdown triton comfy-cli \
-        jupyterlab jupyterlab-lsp jupyter-server jupyter-server-terminals \
-        ipykernel jupyterlab_code_formatter opencv-python
+    jupyterlab ipykernel opencv-python
 
-# 6. COMFY: Install Core
+# 5. COMFYUI INSTALL
 RUN --mount=type=cache,target=/root/.cache/pip \
     mkdir -p /ComfyUI && \
     git clone --depth=1 https://github.com/comfyanonymous/ComfyUI.git /ComfyUI && \
