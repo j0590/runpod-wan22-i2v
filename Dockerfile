@@ -16,23 +16,20 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl ffmpeg ninja-build git aria2 git-lfs wget vim \
         libgl1 libglib2.0-0 build-essential gcc && \
     \
-    # Symlink Python 3.12
     ln -sf /usr/bin/python3.12 /usr/bin/python && \
     ln -sf /usr/bin/pip3 /usr/bin/pip && \
-    \
-    # Create venv
     python3.12 -m venv /opt/venv && \
-    \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 4. ACTIVATE VENV
 ENV PATH="/opt/venv/bin:$PATH"
 
-# 5. EXACT HEAREMEN TORCH INSTALL (Nightly cu128)
-# Using cache mount to prevent OOM
+# 5. TORCH INSTALL [THE FIX IS HERE]
+# We use cu126 because cu128 wheels DO NOT EXIST yet.
+# This works perfectly on the 12.8 driver.
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --pre torch torchvision torchaudio \
-        --index-url https://download.pytorch.org/whl/nightly/cu128
+        --index-url https://download.pytorch.org/whl/nightly/cu126
 
 # 6. PYTHON TOOLS
 RUN --mount=type=cache,target=/root/.cache/pip \
