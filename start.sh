@@ -6,7 +6,20 @@ TCMALLOC="$(ldconfig -p | grep -Po "libtcmalloc.so.\d" | head -n 1)"
 export LD_PRELOAD="${TCMALLOC}"
 export PATH="/opt/venv/bin:$PATH"
 
-# 2. SAGE ATTENTION (Background)
+# 2. STORAGE SETUP (Hearemen Logic)
+if [ -d "/workspace" ]; then
+    echo "✅ Network Volume detected."
+    ROOT_DIR="/workspace"
+    # START JUPYTER IMMEDIATELY (Network Volume Mode)
+    jupyter-lab --ip=0.0.0.0 --allow-root --no-browser --NotebookApp.token='' --NotebookApp.password='' --ServerApp.allow_origin='*' --ServerApp.allow_credentials=True --notebook-dir=/workspace &
+else
+    echo "⚠️ No Network Volume. Using ephemeral storage."
+    ROOT_DIR="/"
+    # START JUPYTER IMMEDIATELY (Ephemeral Mode)
+    jupyter-lab --ip=0.0.0.0 --allow-root --no-browser --NotebookApp.token='' --NotebookApp.password='' --ServerApp.allow_origin='*' --ServerApp.allow_credentials=True --notebook-dir=/ &
+fi
+
+# 3. SAGE ATTENTION (Background Build)
 echo "⚙️  Starting SageAttention build..."
 (
     cd /tmp
@@ -18,15 +31,6 @@ echo "⚙️  Starting SageAttention build..."
     echo "done" > /tmp/sage_build_done
 ) > /tmp/sage_build.log 2>&1 &
 SAGE_PID=$!
-
-# 3. VOLUME SETUP
-if [ -d "/workspace" ]; then
-    echo "✅ Network Volume detected."
-    ROOT_DIR="/workspace"
-else
-    echo "⚠️ No Network Volume. Using ephemeral storage."
-    ROOT_DIR="/"
-fi
 
 COMFY_DIR="$ROOT_DIR/ComfyUI"
 CUSTOM_NODES="$COMFY_DIR/custom_nodes"
@@ -136,7 +140,7 @@ if [ ! -f "$UPSCALE_DIR/1xSkinContrast-SuperUltraCompact.pth" ]; then
     gdown --id 1-pC6_7Lrmy3p-VAh-dGzvETRBUUAQzmV -O "$UPSCALE_DIR/1xSkinContrast-SuperUltraCompact.pth"
 fi
 
-# CivitAI
+# CivitAI LoRAs
 CIV_TOKEN="Authorization: Bearer 1fbae9052dd92d22f2d66081452c188b"
 download "https://civitai.com/api/download/models/2312759" "$LORA_DIR/boobiefixer_high.safetensors" "$CIV_TOKEN"
 download "https://civitai.com/api/download/models/2312689" "$LORA_DIR/boobiefixer_low.safetensors" "$CIV_TOKEN"
@@ -149,7 +153,7 @@ download "https://civitai.com/api/download/models/2176505" "$LORA_DIR/DR34ML4Y_n
 download "https://civitai.com/api/download/models/2496721" "$LORA_DIR/pussy_asshole_low.safetensors" "$CIV_TOKEN"
 download "https://civitai.com/api/download/models/2496754" "$LORA_DIR/pussy_asshole_high.safetensors" "$CIV_TOKEN"
 
-# GDrive
+# GDrive LoRAs
 [ ! -f "$LORA_DIR/Instagirlv2.5-LOW.safetensors" ] && gdown --id 1pwkyAiN15RxocVPsSEdebVUbhSaDUdIF -O "$LORA_DIR/Instagirlv2.5-LOW.safetensors"
 [ ! -f "$LORA_DIR/Instagirlv2.5-HIGH.safetensors" ] && gdown --id 1BfU6o4ICsN5o-NTB5PAoQEK5n1c1j4B0 -O "$LORA_DIR/Instagirlv2.5-HIGH.safetensors"
 
