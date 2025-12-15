@@ -1,4 +1,4 @@
-# 1. EXACT HEAREMEN BASE IMAGE
+# 1. EXACT HEAREMEN BASE
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04 AS base
 
 # 2. EXACT HEAREMEN ENV FLAGS
@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     CMAKE_BUILD_PARALLEL_LEVEL=8
 
-# 3. EXACT HEAREMEN SYSTEM INSTALL (Line-for-line)
+# 3. EXACT HEAREMEN SYSTEM INSTALL
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl ffmpeg ninja-build git aria2 git-lfs wget vim \
         libgl1 libglib2.0-0 build-essential gcc && \
     \
-    # Python 3.12 symlinks
+    # Symlink Python 3.12
     ln -sf /usr/bin/python3.12 /usr/bin/python && \
     ln -sf /usr/bin/pip3 /usr/bin/pip && \
     \
@@ -29,15 +29,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ENV PATH="/opt/venv/bin:$PATH"
 
 # 5. EXACT HEAREMEN TORCH INSTALL (Nightly cu128)
+# Using cache mount to prevent OOM
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --pre torch torchvision torchaudio \
         --index-url https://download.pytorch.org/whl/nightly/cu128
 
-# 6. EXACT HEAREMEN CORE TOOLS
+# 6. PYTHON TOOLS
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install packaging setuptools wheel
 
-# 7. RUNTIME LIBS (Added your requested 'comfy-cli' here too)
+# 7. RUNTIME LIBS
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install pyyaml gdown triton comfy-cli jupyterlab jupyterlab-lsp \
         jupyter-server jupyter-server-terminals \
@@ -47,7 +48,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 RUN --mount=type=cache,target=/root/.cache/pip \
     /usr/bin/yes | comfy --workspace /ComfyUI install
 
-# 9. YOUR START SCRIPT
+# 9. START SCRIPT
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
