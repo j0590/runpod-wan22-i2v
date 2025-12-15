@@ -1,4 +1,4 @@
-# 1. BASE IMAGE (Matches your working logs)
+# 1. BASE IMAGE
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04 AS base
 
 # 2. ENV FLAGS
@@ -8,8 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CMAKE_BUILD_PARALLEL_LEVEL=8 \
     PATH="/opt/venv/bin:$PATH"
 
-# 3. SYSTEM INSTALL
-# Added 'python3-dev' explicitly to fix "fatal error: Python.h"
+# 3. SYSTEM INSTALL [CRITICAL FIX: python3-dev added]
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -24,7 +23,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     /opt/venv/bin/pip install --upgrade pip setuptools wheel && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 4. INSTALL TORCH (Verified URL)
+# 4. INSTALL TORCH (Using the PROVEN URL from your logs)
 RUN pip install --no-cache-dir torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 \
     --index-url https://download.pytorch.org/whl/cu128
 
