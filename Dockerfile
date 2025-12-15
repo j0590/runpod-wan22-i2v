@@ -1,4 +1,4 @@
-# 1. BASE IMAGE (Matches your logs)
+# 1. BASE IMAGE (Matches your working logs)
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04 AS base
 
 # 2. ENV FLAGS
@@ -8,7 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CMAKE_BUILD_PARALLEL_LEVEL=8 \
     PATH="/opt/venv/bin:$PATH"
 
-# 3. SYSTEM INSTALL (Added python3-dev for Insightface)
+# 3. SYSTEM INSTALL
+# Added 'python3-dev' explicitly to fix "fatal error: Python.h"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -19,18 +20,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     ln -sf /usr/bin/python3.12 /usr/bin/python && \
     ln -sf /usr/bin/pip3 /usr/bin/pip && \
     python3.12 -m venv /opt/venv && \
-    # Upgrade pip first to handle modern wheels
+    # Upgrade pip to handle modern wheels correctly
     /opt/venv/bin/pip install --upgrade pip setuptools wheel && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 4. INSTALL TORCH (Using the PROVEN URL from your logs)
-# We use --no-cache-dir to avoid OOM during the build
+# 4. INSTALL TORCH (Verified URL)
 RUN pip install --no-cache-dir torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 \
     --index-url https://download.pytorch.org/whl/cu128
 
-# 5. [CRITICAL FIX] INSTALL INSIGHTFACE & ONNX HERE
-# Building this at runtime fails because Python.h is missing. 
-# Building it here works because we have the dev tools loaded.
+# 5. [THE FIX] PRE-INSTALL INSIGHTFACE
+# We install it here so it builds successfully with the dev tools above.
 RUN pip install --no-cache-dir insightface onnxruntime-gpu
 
 # 6. RUNTIME LIBS
