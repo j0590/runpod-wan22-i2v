@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -u
 
-# 1. MEMORY OPTIMIZATION (Hearemen Standard)
+# 1. MEMORY OPTIMIZATION
 TCMALLOC="$(ldconfig -p | grep -Po "libtcmalloc.so.\d" | head -n 1)"
 export LD_PRELOAD="${TCMALLOC}"
 export PATH="/opt/venv/bin:$PATH"
 
-# 2. SAGE ATTENTION BUILD
+# 2. SAGE ATTENTION BUILD (Background)
 echo "⚙️  Starting SageAttention build (Background)..."
 (
     cd /tmp
@@ -35,7 +35,7 @@ LORA_DIR="$COMFY_DIR/models/loras"
 CLIP_DIR="$COMFY_DIR/models/clip"
 UPSCALE_DIR="$COMFY_DIR/models/upscale_models"
 
-# Sync ComfyUI if empty
+# Sync ComfyUI
 if [ ! -d "$COMFY_DIR" ] || [ -z "$(ls -A "$COMFY_DIR")" ]; then
     echo "📦 Copying ComfyUI to volume..."
     cp -a /ComfyUI/. "$COMFY_DIR/"
@@ -51,6 +51,7 @@ install_node() {
     if [ ! -d "$dir" ]; then
         echo "   ⬇️ Cloning $dir..."
         git clone "$url"
+        # Install requirements if they exist (filter torch)
         if [ -f "$dir/requirements.txt" ]; then
             grep -vE "torch|torchvision|torchaudio" "$dir/requirements.txt" > "$dir/reqs_clean.txt"
             pip install -r "$dir/reqs_clean.txt" &
@@ -60,12 +61,12 @@ install_node() {
 
 echo "🧩 Installing Custom Nodes..."
 
-# --- YOUR REQUESTED NODES ---
+# --- YOUR REQUESTS ---
 install_node "https://github.com/princepainter/ComfyUI-PainterI2V.git"
 install_node "https://github.com/stduhpf/ComfyUI-WanMoeKSampler.git"
 install_node "https://github.com/Miosp/ComfyUI-FBCNN.git"
 
-# --- HEAREMEN FULL NODE LIST ---
+# --- HEAREMEN FULL LIST ---
 install_node "https://github.com/ssitu/ComfyUI_UltimateSDUpscale.git"
 install_node "https://github.com/kijai/ComfyUI-KJNodes.git"
 install_node "https://github.com/rgthree/rgthree-comfy.git"
@@ -96,7 +97,7 @@ install_node "https://github.com/BadCafeCode/masquerade-nodes-comfyui.git"
 install_node "https://github.com/1038lab/ComfyUI-RMBG.git"
 install_node "https://github.com/M1kep/ComfyLiterals.git"
 
-wait # Wait for node requirements
+wait # Wait for nodes
 
 # 5. MODEL DOWNLOADER
 download() {
@@ -115,7 +116,7 @@ download() {
 
 echo "⬇️  Downloading Models..."
 
-# --- YOUR REQUESTED MODELS ---
+# --- YOUR MODELS ---
 download "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors" "$DIFF_DIR/Wan2.2_Remix_NSFW_i2v_14b_high_lighting_v2.0.safetensors"
 download "https://huggingface.co/FX-FeiHou/wan2.2-Remix/resolve/main/NSFW/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors" "$DIFF_DIR/Wan2.2_Remix_NSFW_i2v_14b_low_lighting_v2.0.safetensors"
 download "https://huggingface.co/NSFW-API/NSFW-Wan-UMT5-XXL/resolve/main/nsfw_wan_umt5-xxl_fp8_scaled.safetensors" "$CLIP_DIR/nsfw_wan_umt5-xxl_fp8_scaled.safetensors"
@@ -125,7 +126,7 @@ if [ ! -f "$UPSCALE_DIR/1xSkinContrast-SuperUltraCompact.pth" ]; then
     gdown --id 1-pC6_7Lrmy3p-VAh-dGzvETRBUUAQzmV -O "$UPSCALE_DIR/1xSkinContrast-SuperUltraCompact.pth"
 fi
 
-# CivitAI Downloads
+# CivitAI
 CIV_TOKEN="Authorization: Bearer 1fbae9052dd92d22f2d66081452c188b"
 download "https://civitai.com/api/download/models/2312759" "$LORA_DIR/boobiefixer_high.safetensors" "$CIV_TOKEN"
 download "https://civitai.com/api/download/models/2312689" "$LORA_DIR/boobiefixer_low.safetensors" "$CIV_TOKEN"
@@ -138,7 +139,7 @@ download "https://civitai.com/api/download/models/2176505" "$LORA_DIR/DR34ML4Y_n
 download "https://civitai.com/api/download/models/2496721" "$LORA_DIR/pussy_asshole_low.safetensors" "$CIV_TOKEN"
 download "https://civitai.com/api/download/models/2496754" "$LORA_DIR/pussy_asshole_high.safetensors" "$CIV_TOKEN"
 
-# GDrive LoRAs
+# GDrive
 [ ! -f "$LORA_DIR/Instagirlv2.5-LOW.safetensors" ] && gdown --id 1pwkyAiN15RxocVPsSEdebVUbhSaDUdIF -O "$LORA_DIR/Instagirlv2.5-LOW.safetensors"
 [ ! -f "$LORA_DIR/Instagirlv2.5-HIGH.safetensors" ] && gdown --id 1BfU6o4ICsN5o-NTB5PAoQEK5n1c1j4B0 -O "$LORA_DIR/Instagirlv2.5-HIGH.safetensors"
 
