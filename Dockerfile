@@ -1,12 +1,11 @@
-# 1. BASE IMAGE
+# 1. BASE IMAGE (Hearemen Standard)
 FROM nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04 AS base
 
 # 2. ENV FLAGS
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_PREFER_BINARY=1 \
     PYTHONUNBUFFERED=1 \
-    CMAKE_BUILD_PARALLEL_LEVEL=8 \
-    PATH="/opt/venv/bin:$PATH"
+    CMAKE_BUILD_PARALLEL_LEVEL=8
 
 # 3. SYSTEM DEPS
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -21,21 +20,30 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     python3.12 -m venv /opt/venv && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 4. INSTALL TORCH (The "Slow" Part - Baked in!)
-# We use the URL from your logs: https://download.pytorch.org/whl/cu128
-# We use --no-cache-dir to prevent build crashes.
-RUN pip install --no-cache-dir torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 \
-    --index-url https://download.pytorch.org/whl/cu128
+# 4. VENV
+ENV PATH="/opt/venv/bin:$PATH"
 
-# 5. PYTHON TOOLS
-RUN pip install --no-cache-dir packaging setuptools wheel pyyaml gdown triton comfy-cli \
-    jupyterlab jupyterlab-lsp jupyter-server jupyter-server-terminals \
-    ipykernel jupyterlab_code_formatter opencv-python
+# 5. TORCH INSTALL [THE FIX]
+# We use cu126 because cu128 wheels are missing from the server.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --pre torch torchvision torchaudio \
+        --index-url https://download.pytorch.org/whl/nightly/cu126
 
-# 6. COMFYUI INSTALL
-RUN /usr/bin/yes | comfy --workspace /ComfyUI install
+# 6. PYTHON TOOLS
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install packaging setuptools wheel
 
-# 7. START SCRIPT
+# 7. RUNTIME LIBS
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install pyyaml gdown triton comfy-cli jupyterlab jupyterlab-lsp \
+        jupyter-server jupyter-server-terminals \
+        ipykernel jupyterlab_code_formatter opencv-python
+
+# 8. COMFYUI INSTALL
+RUN --mount=type=cache,target=/root/.cache/pip \
+    /usr/bin/yes | comfy --workspace /ComfyUI install
+
+# 9. START SCRIPT
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
 
